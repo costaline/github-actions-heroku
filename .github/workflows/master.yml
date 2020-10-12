@@ -1,0 +1,46 @@
+name: CI CD master
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository
+        uses: actions/checkout@v2
+
+      - name: Read .nvmrc
+        id: node_version
+        run: echo ::set-output name=NODE_VERSION::$(cat .nvmrc)
+
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ steps.node_version.outputs.NODE_VERSION }}
+          
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Make build
+        run: npm run build
+        
+  deploy:
+    runs-on: ubuntu-latest
+    
+    needs: [build]
+    
+    steps:
+      - name: Repository
+        uses: actions/checkout@v2
+                 
+      - name: Heroku
+        uses: akhileshns/heroku-deploy@v3.5.7
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "github-actions-heroku"
+          heroku_email: "kv.zubarev@gmail.com"
